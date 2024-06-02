@@ -1,0 +1,4 @@
+tools/*
+env/*
+__pycache__/*
+downloads/*
