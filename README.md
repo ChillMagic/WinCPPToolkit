@@ -63,3 +63,20 @@ To setup this tool, you typically follow these steps after ensuring Python is in
    ```
    set PATH=%PATH%;%cd%\bin
    ```
+
+## Usage
+
+After setting up the `PATH`, you can directly use commands like `cmake` for building. This toolkit utilizes clang/llvm + cmake + ninja as the toolset, which can be used as follows:
+
+```
+cmake ..
+ninja
+```
+
+### Compatibility
+
+#### MinGW
+In some projects, although Windows cmake scripts are configured, the MinGW toolchain is used. Compatibility can be achieved by adding the `__MINGW32__` macro, be like:
+```
+cmake .. -DCMAKE_CXX_FLAGS=-D__MINGW32__
+```
