@@ -12,11 +12,11 @@ Currently integrated or in the process of integration tools:
 
 ## Requirements
 - Windows 10 or later
-- Python 3
+- Python 3 (Optional)
 
-## Usage
+## Setup
 
-To use this tool, you typically follow these steps after ensuring Python is installed on your system:
+To setup this tool, you typically follow these steps after ensuring Python is installed on your system:
 
 1. **Clone the repository**:
    Clone the repository to your local machine using Git.
@@ -30,8 +30,36 @@ To use this tool, you typically follow these steps after ensuring Python is inst
    cd WinCPPToolkit
    ```
 
-3. **Run the init script**:
+3. **Setup Python environment (Optional)**
+   If Python is not installed, it can be installed using the `get-python` script:
+   ```
+   .\get-python
+   ```
+   Then, add the Python command to the environment variables.
+
+   *Powershell*:
+   ```
+   $env:PATH += ";" + (Join-Path (Get-Location) "python")
+   ```
+   *CMD*:
+   ```
+   set PATH=%PATH%;%cd%\python
+   ```
+
+4. **Run the init script**:
    Execute the script or command to init the tool.
    ```bash
    python init.py
+   ```
+
+5. **Setup `PATH` variable**:
+   Now, by adding toolkit to the `PATH`, you can directly use the commands.
+
+   *Powershell*:
+   ```
+   $env:PATH += ";" + (Join-Path (Get-Location) "bin")
+   ```
+   *CMD*:
+   ```
+   set PATH=%PATH%;%cd%\bin
    ```

@@ -4,6 +4,9 @@ from pathlib import Path
 import shutil
 import tempfile
 
+sys.path.insert(0, str(Path(__file__).absolute().parent))
+from init import download_file, extract
+
 
 SEVENZIP_URL_TEMPLATE = 'https://www.7-zip.org/a/7z%s%s.exe'
 
@@ -35,7 +38,6 @@ def main(args) -> int:
 
     for arch, suffix in SEVENZIP_URL_SUFFIX.items():
         url = SEVENZIP_URL_TEMPLATE % (args.seven_zip_version, suffix)
-        from init import download_file, extract
         file_name = url.split('/')[-1]
         download_file(url, downloads_dir, file_name, use_cache=True)
 
