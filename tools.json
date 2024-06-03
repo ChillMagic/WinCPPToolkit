@@ -5,7 +5,7 @@
             "sha256": "6423ed300e6aa1b15c4aeae9a7399157f53fc84a2fb7242ca64c8dfd83e5f8a6",
             "use_subdir": true,
             "command": {
-                "cmake": "bin/cmake.exe"
+                "cmake": ["bin/cmake.exe", "-GNinja", "-DCMAKE_TOOLCHAIN_FILE=\"%~dp0/toolchain.cmake\""]
             }
         },
         "git": {

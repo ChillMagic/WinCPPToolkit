@@ -107,7 +107,13 @@ def main(args):
     for tool, tool_info in tools[get_platform_machine()].items():
         for command, path in tool_info['command'].items():
             with (bin_dir / f'{command}.bat').open('w+') as f:
-                f.write(f'@echo off\n"%~dp0../tools/{tool}/{path}" %*\n')
+                if isinstance(path, str):
+                    program = path
+                    arguments = ''
+                else:
+                    program = path[0]
+                    arguments = ' '.join(path[1:]) + ' '
+                f.write(f'@echo off\n"%~dp0../tools/{tool}/{program}" {arguments}%*\n')
 
     return 0
 
