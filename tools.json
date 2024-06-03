@@ -35,7 +35,8 @@
                 "clang": "bin/clang.exe",
                 "clang++": "bin/clang++.exe",
                 "llvm-rc": "bin/llvm-rc.exe",
-                "llvm-ar": "bin/llvm-ar.exe"
+                "llvm-ar": "bin/llvm-ar.exe",
+                "clang-scan-deps": "bin/clang-scan-deps.exe"
             }
         },
         "ninja": {
