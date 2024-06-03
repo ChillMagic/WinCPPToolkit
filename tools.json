@@ -5,7 +5,18 @@
             "sha256": "6423ed300e6aa1b15c4aeae9a7399157f53fc84a2fb7242ca64c8dfd83e5f8a6",
             "use_subdir": true,
             "command": {
-                "cmake": ["bin/cmake.exe", "-GNinja", "-DCMAKE_TOOLCHAIN_FILE=\"%~dp0/toolchain.cmake\""]
+                "cmake": {
+                    "program": "bin/cmake.exe",
+                    "script": [
+                        "@echo off",
+                        "call \"%~dp0../scripts/check-cmake-argument.bat\" %*",
+                        "if \"%cmake_generate%\" == \"1\" (",
+                        "    \"%~dp0../tools/cmake/$[program]\" -GNinja -DCMAKE_TOOLCHAIN_FILE=\"%~dp0../toolchain.cmake\" %*",
+                        ") else (",
+                        "    \"%~dp0../tools/cmake/$[program]\" %*",
+                        ")"
+                    ]
+                }
             }
         },
         "git": {
@@ -23,7 +34,8 @@
             "command": {
                 "clang": "bin/clang.exe",
                 "clang++": "bin/clang++.exe",
-                "llvm-rc": "bin/llvm-rc.exe"
+                "llvm-rc": "bin/llvm-rc.exe",
+                "llvm-ar": "bin/llvm-ar.exe"
             }
         },
         "ninja": {

@@ -76,6 +76,8 @@ def main(args):
     temp_dir.mkdir(exist_ok=True)
 
     bin_dir = program_home / 'bin'
+    if bin_dir.exists():
+        shutil.rmtree(bin_dir)
     bin_dir.mkdir(exist_ok=True)
 
     with Path('tools.json').open() as f:
@@ -105,15 +107,20 @@ def main(args):
 
     # Setup `bin` directory
     for tool, tool_info in tools[get_platform_machine()].items():
-        for command, path in tool_info['command'].items():
+        for command, config in tool_info['command'].items():
             with (bin_dir / f'{command}.bat').open('w+') as f:
-                if isinstance(path, str):
-                    program = path
-                    arguments = ''
+                if isinstance(config, dict):
+                    program = config['program']
+                    script = '\n'.join(config['script']).replace('$[program]', program)
+                    f.write(script + "\n")
                 else:
-                    program = path[0]
-                    arguments = ' '.join(path[1:]) + ' '
-                f.write(f'@echo off\n"%~dp0../tools/{tool}/{program}" {arguments}%*\n')
+                    if isinstance(config, str):
+                        program = config
+                        arguments = ''
+                    else:
+                        program = config[0]
+                        arguments = ' '.join(config[1:]) + ' '
+                    f.write(f'@echo off\n"%~dp0../tools/{tool}/{program}" {arguments}%*\n')
 
     return 0
 
