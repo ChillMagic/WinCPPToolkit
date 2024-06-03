@@ -75,9 +75,13 @@ def main(args):
         shutil.rmtree(temp_dir)
     temp_dir.mkdir(exist_ok=True)
 
+    bin_dir = program_home / 'bin'
+    bin_dir.mkdir(exist_ok=True)
+
     with Path('tools.json').open() as f:
         tools = json.load(f)
 
+    # Setup `tools` directory
     for tool, tool_info in tools[get_platform_machine()].items():
         if (tools_dir / tool).exists():
             continue
@@ -98,6 +102,12 @@ def main(args):
             shutil.move(src=extract_dir, dst=tools_dir / tool)
 
     shutil.rmtree(temp_dir)
+
+    # Setup `bin` directory
+    for tool, tool_info in tools[get_platform_machine()].items():
+        for command, path in tool_info['command'].items():
+            with (bin_dir / f'{command}.bat').open('w+') as f:
+                f.write(f'@echo off\n%~dp0../tools/{tool}/{path} %*\n')
 
     return 0
 
