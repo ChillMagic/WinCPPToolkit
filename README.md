@@ -79,6 +79,10 @@ cmake ..
 ninja
 ```
 
+In CLion, you can use it by simply making the following settings:
+
+![](CLion.png)
+
 ### Compatibility
 
 #### MinGW
