@@ -1,2 +1,2 @@
 @echo off
-powershell -ExecutionPolicy Bypass -File %~dp0get-python.ps1
+powershell -ExecutionPolicy Bypass -File "%~dp0get-python.ps1"

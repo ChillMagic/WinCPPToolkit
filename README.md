@@ -33,7 +33,7 @@ To setup this tool, you typically follow these steps after ensuring Python is in
 3. **Setup Python environment (Optional)**
    If Python is not installed, it can be installed using the `get-python` script:
    ```
-   .\get-python
+   .\get-python.bat
    ```
    Then, add the Python command to the environment variables.
 
