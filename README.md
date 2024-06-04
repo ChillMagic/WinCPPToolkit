@@ -19,6 +19,7 @@ Currently integrated or in the process of integration tools:
 
 ## Requirements
 - Windows 10 or later
+- [VC++ Build Tools](https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=buildtools) (Recommended) or [Visual Studio](https://visualstudio.microsoft.com/)
 
 ## Setup
 
