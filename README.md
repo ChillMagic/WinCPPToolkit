@@ -2,6 +2,8 @@
 
 WinCPPToolkit is an integrated suite of popular C++ build tools for Windows, designed to enhance the efficiency of cross-platform projects being developed within the Windows environment.
 
+This toolkit is designed for cross-platform C/C++ projects, making building more convenient. It can also be integrated into IDEs such as CLion, offering an alternative toolchain option besides *Visual Studio* and *MinGW*.
+
 You can use it on Windows in a way similar to Linux like this:
 ```
 mkdir build
