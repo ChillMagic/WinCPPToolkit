@@ -9,6 +9,17 @@ import json
 from typing import Optional
 import hashlib
 import argparse
+import os
+
+
+ProgramHome = Path(__file__).absolute().parent
+PythonRoot = ProgramHome / 'python'
+ToolsDir = ProgramHome / 'tools'
+DownloadsDir = ProgramHome / 'downloads'
+TempDir = ProgramHome / 'temp'
+BinDir = ProgramHome / 'bin'
+
+PythonExecute = PythonRoot / 'python.exe'
 
 
 def get_platform_machine() -> str:
@@ -58,57 +69,82 @@ def get_sha256(file: Path) -> str:
         return hashlib.sha256(f.read()).hexdigest()
 
 
+def init_dirs():
+    ToolsDir.mkdir(exist_ok=True)
+    DownloadsDir.mkdir(exist_ok=True)
+
+    if TempDir.exists():
+        shutil.rmtree(TempDir)
+    TempDir.mkdir(exist_ok=True)
+
+    if BinDir.exists():
+        shutil.rmtree(BinDir)
+    BinDir.mkdir(exist_ok=True)
+
+
+def do_enable_pip():
+    if (PythonRoot / 'Scripts' / 'pip.exe').exists():
+        return
+    pth_file = list(filter(lambda p: p.suffix == '._pth', PythonRoot.iterdir()))[0]
+    with pth_file.open('r') as f:
+        content = f.read()
+    content = content.replace('#import site', 'import site')
+    with pth_file.open('w') as f:
+        f.write(content)
+    download_file('https://bootstrap.pypa.io/get-pip.py', DownloadsDir, 'get-pip.py', use_cache=True)
+    subprocess.check_call([PythonRoot / 'python.exe', DownloadsDir / 'get-pip.py'])
+
+
 def main(args):
     if args.verbose:
         logging.getLogger().setLevel(logging.INFO)
 
-    program_home = Path(__file__).absolute().parent
+    init_dirs()
 
-    tools_dir = program_home / 'tools'
-    tools_dir.mkdir(exist_ok=True)
+    if not PythonExecute.exists():
+        subprocess.check_call([ProgramHome / 'get-python.bat'])
 
-    downloads_dir = program_home / 'downloads'
-    downloads_dir.mkdir(exist_ok=True)
-
-    temp_dir = program_home / 'temp'
-    if temp_dir.exists():
-        shutil.rmtree(temp_dir)
-    temp_dir.mkdir(exist_ok=True)
-
-    bin_dir = program_home / 'bin'
-    if bin_dir.exists():
-        shutil.rmtree(bin_dir)
-    bin_dir.mkdir(exist_ok=True)
+    do_enable_pip()
 
     with Path('tools.json').open() as f:
         tools = json.load(f)
 
     # Setup `tools` directory
     for tool, tool_info in tools[get_platform_machine()].items():
-        if (tools_dir / tool).exists():
+        if (ToolsDir / tool).exists():
             continue
 
-        url = tool_info['url']
+        url = tool_info.get('url')
+        if url is None:
+            continue
+
         tool_download_name = url.split('/')[-1]
         sha256 = tool_info['sha256']
-        download_file(url, downloads_dir, tool_download_name, use_cache=True, sha256=sha256)
-        extract_dir = temp_dir / f'{tool}.temp'
-        extract(downloads_dir / tool_download_name, extract_dir)
+        download_file(url, DownloadsDir, tool_download_name, use_cache=True, sha256=sha256)
+        extract_dir = TempDir / f'{tool}.temp'
+        extract(DownloadsDir / tool_download_name, extract_dir)
         if tool_info.get('nested_tar'):
-            tar_file = extract_dir / (downloads_dir / tool_download_name).with_suffix('').name
+            tar_file = extract_dir / (DownloadsDir / tool_download_name).with_suffix('').name
             extract(tar_file, extract_dir)
             tar_file.unlink()
         if tool_info.get('use_subdir'):
-            shutil.move(src=extract_dir / list(extract_dir.iterdir())[0], dst=tools_dir / tool)
+            shutil.move(src=extract_dir / list(extract_dir.iterdir())[0], dst=ToolsDir / tool)
         else:
-            shutil.move(src=extract_dir, dst=tools_dir / tool)
+            shutil.move(src=extract_dir, dst=ToolsDir / tool)
 
-    shutil.rmtree(temp_dir)
+    shutil.rmtree(TempDir)
+
+    # Run `install`
+    for tool, tool_info in tools[get_platform_machine()].items():
+        install = tool_info.get('install')
+        if install:
+            install[0] = install[0].replace('$[python]', str(PythonExecute))
+            subprocess.check_call(install)
 
     # Setup `bin` directory
     for tool, tool_info in tools[get_platform_machine()].items():
         for command, config in tool_info['command'].items():
-            with (bin_dir / f'{command}.bat').open('w+') as f:
+            with (BinDir / f'{command}.bat').open('w+') as f:
                 if isinstance(config, dict):
                     program = config['program']
                     script = '\n'.join(config['script']).replace('$[program]', program)
@@ -120,7 +156,12 @@ def main(args):
                     else:
                         program = config[0]
                         arguments = ' '.join(config[1:]) + ' '
-                    f.write(f'@echo off\n"%~dp0../tools/{tool}/{program}" {arguments}%*\n')
+                    program = program.replace('$[python]', str(PythonExecute.relative_to(ProgramHome)))
+                    if program.startswith('^'):
+                        run_command = os.path.normpath(program[1:]).replace('\\', '/')
+                    else:
+                        run_command = f'tools/{tool}/{program}'
+                    f.write(f'@echo off\n"%~dp0../{run_command}" {arguments}%*\n')
 
     return 0
 

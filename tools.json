@@ -45,6 +45,12 @@
             "command": {
                 "ninja": "ninja.exe"
             }
+        },
+        "meson": {
+            "install": ["$[python]", "-m", "pip", "install", "meson"],
+            "command": {
+                "meson": "^$[python]/../Scripts/meson.exe"
+            }
         }
     }
 }
