@@ -15,10 +15,10 @@ Currently integrated or in the process of integration tools:
 - cmake
 - ninja
 - git
+- meson
 
 ## Requirements
 - Windows 10 or later
-- Python 3 (Optional)
 
 ## Setup
 
@@ -36,29 +36,23 @@ To setup this tool, you typically follow these steps after ensuring Python is in
    cd WinCPPToolkit
    ```
 
-3. **Setup Python environment (Optional)**
-   If Python is not installed, it can be installed using the `get-python` script:
+3. **Setup Python environment**
+   Run `get-python` script to setup.
    ```
    .\get-python.bat
-   ```
-   Then, add the Python command to the environment variables.
-
-   *Powershell*:
-   ```
-   $env:PATH += ";" + (Join-Path (Get-Location) "python")
-   ```
-   *CMD*:
-   ```
-   set PATH=%PATH%;%cd%\python
    ```
 
 4. **Run the init script**:
    Execute the script or command to init the tool.
-   ```bash
-   python init.py
+   ```batch
+   python\python init.py
    ```
 
-5. **Setup `PATH` variable**:
+## Usage
+
+### Shell Setup
+
+**Setup `PATH` variable**:
    Now, by adding toolkit to the `PATH`, you can directly use the commands.
 
    *Powershell*:
@@ -70,8 +64,6 @@ To setup this tool, you typically follow these steps after ensuring Python is in
    set PATH=%PATH%;%cd%\bin
    ```
 
-## Usage
-
 After setting up the `PATH`, you can directly use commands like `cmake` for building. This toolkit utilizes clang/llvm + cmake + ninja as the toolset, which can be used as follows:
 
 ```
@@ -79,9 +71,12 @@ cmake ..
 ninja
 ```
 
+### CLion Setup
+
 In CLion, you can use it by simply making the following settings:
 
-![](CLion.png)
+![](CLion-Toolchains.png)
+![](CLion-Meson.png)
 
 ### Compatibility
 
