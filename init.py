@@ -18,6 +18,7 @@ ToolsDir = ProgramHome / 'tools'
 DownloadsDir = ProgramHome / 'downloads'
 TempDir = ProgramHome / 'temp'
 BinDir = ProgramHome / 'bin'
+BinBatDir = ProgramHome / 'bin-bat'
 
 PythonExecute = PythonRoot / 'python.exe'
 
@@ -81,6 +82,10 @@ def init_dirs():
         shutil.rmtree(BinDir)
     BinDir.mkdir(exist_ok=True)
 
+    if BinBatDir.exists():
+        shutil.rmtree(BinBatDir)
+    BinBatDir.mkdir(exist_ok=True)
+
 
 def do_enable_pip():
     if (PythonRoot / 'Scripts' / 'pip.exe').exists():
@@ -92,7 +97,7 @@ def do_enable_pip():
     with pth_file.open('w') as f:
         f.write(content)
     download_file('https://bootstrap.pypa.io/get-pip.py', DownloadsDir, 'get-pip.py', use_cache=True)
-    subprocess.check_call([PythonRoot / 'python.exe', DownloadsDir / 'get-pip.py'])
+    subprocess.check_call([PythonRoot / 'python.exe', DownloadsDir / 'get-pip.py'], stdout=subprocess.DEVNULL)
 
 
 def main(args):
@@ -102,7 +107,7 @@ def main(args):
     init_dirs()
 
     if not PythonExecute.exists():
-        subprocess.check_call([ProgramHome / 'get-python.bat'])
+        subprocess.check_call([ProgramHome / 'get-python.bat'], stdout=subprocess.DEVNULL)
 
     do_enable_pip()
 
@@ -132,19 +137,17 @@ def main(args):
         else:
             shutil.move(src=extract_dir, dst=ToolsDir / tool)
 
-    shutil.rmtree(TempDir)
-
     # Run `install`
     for tool, tool_info in tools[get_platform_machine()].items():
         install = tool_info.get('install')
         if install:
             install[0] = install[0].replace('$[python]', str(PythonExecute))
-            subprocess.check_call(install)
+            subprocess.check_call(install, stdout=subprocess.DEVNULL)
 
-    # Setup `bin` directory
+    # Setup `bin-bat` directory
     for tool, tool_info in tools[get_platform_machine()].items():
         for command, config in tool_info['command'].items():
-            with (BinDir / f'{command}.bat').open('w+') as f:
+            with (BinBatDir / f'{command}.bat').open('w+') as f:
                 if isinstance(config, dict):
                     program = config['program']
                     script = '\n'.join(config['script']).replace('$[program]', program)
@@ -162,6 +165,14 @@ def main(args):
                     else:
                         run_command = f'tools/{tool}/{program}'
                     f.write(f'@echo off\n"%~dp0../{run_command}" {arguments}%*\n')
+
+    # Setup `bin` directory
+    subprocess.check_call([BinBatDir / 'clang.bat', ProgramHome / 'scripts' / 'run-bat.c', '-o', TempDir / 'run-bat.exe', '-O3'])
+    for bat in BinBatDir.iterdir():
+        command = bat.with_suffix('').name
+        shutil.copyfile(src=TempDir / 'run-bat.exe', dst=BinDir / f'{command}.exe')
+
+    shutil.rmtree(TempDir)
 
     return 0
 
