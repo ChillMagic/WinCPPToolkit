@@ -31,7 +31,9 @@ int wmain(int argc, const wchar_t *argv[]) {
     size_t command_len = wcslen(command_line);
     wchar_t *arguments = NULL;
 
-    if (command_line[0] == '"') {
+    if (argc == 1) {
+        arguments = L"";
+    } else if (command_line[0] == '"') {
         arguments = wcschr(command_line + 1, L'"') + 2;
     } else {
         arguments = wcschr(command_line, L' ') + 1;
