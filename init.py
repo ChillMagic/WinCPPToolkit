@@ -111,7 +111,7 @@ def main(args):
 
     do_enable_pip()
 
-    with Path('tools.json').open() as f:
+    with Path(ProgramHome / 'tools.json').open() as f:
         tools = json.load(f)
 
     # Setup `tools` directory

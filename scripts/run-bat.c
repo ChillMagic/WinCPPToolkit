@@ -62,6 +62,11 @@ int wmain(int argc, const wchar_t *argv[]) {
     }
     WaitForSingleObject(pi.hProcess, INFINITE);
 
+    DWORD dwExitCode = 0;
+    GetExitCodeProcess(pi.hProcess, &dwExitCode);
+
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
+
+    return dwExitCode;
 }
