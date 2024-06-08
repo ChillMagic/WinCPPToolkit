@@ -21,6 +21,7 @@ BinDir = ProgramHome / 'bin'
 BinBatDir = ProgramHome / 'bin-bat'
 
 PythonExecute = PythonRoot / 'python.exe'
+ClangExecute = ToolsDir / 'clang_llvm' / 'bin' / 'clang.exe'
 
 
 def get_platform_machine() -> str:
@@ -147,30 +148,32 @@ def main(args):
     # Setup `bin-bat` directory
     for tool, tool_info in tools[get_platform_machine()].items():
         for command, config in tool_info['command'].items():
-            with (BinBatDir / f'{command}.bat').open('w+') as f:
-                if isinstance(config, dict):
-                    program = config['program']
-                    script = '\n'.join(config['script']).replace('$[program]', program)
+            if isinstance(config, dict):
+                program = config['program']
+                script = '\n'.join(config['script']).replace('$[program]', program)
+                with (BinBatDir / f'{command}.bat').open('w+') as f:
                     f.write(script + "\n")
-                else:
-                    if isinstance(config, str):
-                        program = config
-                        arguments = ''
-                    else:
-                        program = config[0]
-                        arguments = ' '.join(config[1:]) + ' '
+            else:
+                with (BinBatDir / f'{command}.command').open('w+') as f:
+                    assert isinstance(config, str)
+                    program = config
                     program = program.replace('$[python]', str(PythonExecute.relative_to(ProgramHome)))
                     if program.startswith('^'):
                         run_command = os.path.normpath(program[1:]).replace('\\', '/')
                     else:
                         run_command = f'tools/{tool}/{program}'
-                    f.write(f'@echo off\n"%~dp0../{run_command}" {arguments}%*\n')
+                    f.write(f'{run_command}')
 
     # Setup `bin` directory
-    subprocess.check_call([BinBatDir / 'clang.bat', ProgramHome / 'scripts' / 'run-bat.c', '-o', TempDir / 'run-bat.exe', '-O3'])
+    subprocess.check_call([ClangExecute, ProgramHome / 'scripts' / 'run-bat.c', '-DBATCH_MODE', '-o', TempDir / 'run-bat.exe', '-O3'])
+    subprocess.check_call([ClangExecute, ProgramHome / 'scripts' / 'run-bat.c', '-DCOMMAND_MODE', '-o', TempDir / 'run-command.exe', '-O3'])
     for bat in BinBatDir.iterdir():
-        command = bat.with_suffix('').name
-        shutil.copyfile(src=TempDir / 'run-bat.exe', dst=BinDir / f'{command}.exe')
+        if bat.suffix == '.command':
+            command = bat.with_suffix('').name
+            shutil.copyfile(src=TempDir / 'run-command.exe', dst=BinDir / f'{command}.exe')
+        elif bat.suffix == '.bat':
+            command = bat.with_suffix('').name
+            shutil.copyfile(src=TempDir / 'run-bat.exe', dst=BinDir / f'{command}.exe')
 
     shutil.rmtree(TempDir)
 
