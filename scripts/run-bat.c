@@ -5,26 +5,31 @@
 #pragma comment(lib, "shell32.lib")
 
 
-int wmain(int argc, const wchar_t *argv[]) {
-    wchar_t path[MAX_PATH];
-    wchar_t filename[MAX_PATH];
-
-    if (GetModuleFileNameW(NULL, path, MAX_PATH) == 0) {
-        wprintf(L"Error getting module file name.\n");
-        return 1;
-    }
-
+static void get_batch_path(wchar_t out_path[MAX_PATH], const wchar_t *program_path) {
     // Get xxx.bat
-    wchar_t *filename_result = PathFindFileNameW(path);
-    
+    wchar_t *filename_result = PathFindFileNameW(program_path);
+    wchar_t filename[MAX_PATH];
     wcscpy_s(filename, MAX_PATH, filename_result);
     PathRenameExtensionW(filename, L".bat");
 
     // Get ../../bin-bat/xxx.bat
-    PathRemoveFileSpecW(path);
-    PathRemoveFileSpecW(path);
-    PathCombineW(path, path, L"bin-bat");
-    PathCombineW(path, path, filename);
+    wcscpy_s(out_path, MAX_PATH, program_path);
+    PathRemoveFileSpecW(out_path);
+    PathRemoveFileSpecW(out_path);
+    PathCombineW(out_path, out_path, L"bin-bat");
+    PathCombineW(out_path, out_path, filename);
+}
+
+
+int wmain(int argc, const wchar_t *argv[]) {
+    wchar_t program_path[MAX_PATH];
+    if (GetModuleFileNameW(NULL, program_path, MAX_PATH) == 0) {
+        wprintf(L"Error getting module file name.\n");
+        return 1;
+    }
+
+    wchar_t path[MAX_PATH];
+    get_batch_path(path, program_path);
 
     // Get arguments
     wchar_t *command_line = GetCommandLineW();
