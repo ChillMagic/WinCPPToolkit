@@ -3,5 +3,5 @@ env/*
 __pycache__/*
 downloads/*
 bin/*
-bin-bat/*
+bin-aux/*
 python/*
