@@ -18,7 +18,7 @@ ToolsDir = ProgramHome / 'tools'
 DownloadsDir = ProgramHome / 'downloads'
 TempDir = ProgramHome / 'temp'
 BinDir = ProgramHome / 'bin'
-BinBatDir = ProgramHome / 'bin-bat'
+BinAuxDir = ProgramHome / 'bin-aux'
 
 PythonExecute = PythonRoot / 'python.exe'
 ClangExecute = ToolsDir / 'clang_llvm' / 'bin' / 'clang.exe'
@@ -83,9 +83,9 @@ def init_dirs():
         shutil.rmtree(BinDir)
     BinDir.mkdir(exist_ok=True)
 
-    if BinBatDir.exists():
-        shutil.rmtree(BinBatDir)
-    BinBatDir.mkdir(exist_ok=True)
+    if BinAuxDir.exists():
+        shutil.rmtree(BinAuxDir)
+    BinAuxDir.mkdir(exist_ok=True)
 
 
 def do_enable_pip():
@@ -145,16 +145,16 @@ def main(args):
             install[0] = install[0].replace('$[python]', str(PythonExecute))
             subprocess.check_call(install, stdout=subprocess.DEVNULL)
 
-    # Setup `bin-bat` directory
+    # Setup `bin-aux` directory
     for tool, tool_info in tools[get_platform_machine()].items():
         for command, config in tool_info['command'].items():
             if isinstance(config, dict):
                 program = config['program']
                 script = '\n'.join(config['script']).replace('$[program]', program)
-                with (BinBatDir / f'{command}.bat').open('w+') as f:
+                with (BinAuxDir / f'{command}.bat').open('w+') as f:
                     f.write(script + "\n")
             else:
-                with (BinBatDir / f'{command}.command').open('w+') as f:
+                with (BinAuxDir / f'{command}.command').open('w+') as f:
                     assert isinstance(config, str)
                     program = config
                     program = program.replace('$[python]', str(PythonExecute.relative_to(ProgramHome)))
@@ -165,9 +165,9 @@ def main(args):
                     f.write(f'{run_command}')
 
     # Setup `bin` directory
-    subprocess.check_call([ClangExecute, ProgramHome / 'scripts' / 'run-bat.c', '-DBATCH_MODE', '-o', TempDir / 'run-bat.exe', '-O3'])
-    subprocess.check_call([ClangExecute, ProgramHome / 'scripts' / 'run-bat.c', '-DCOMMAND_MODE', '-o', TempDir / 'run-command.exe', '-O3'])
-    for bat in BinBatDir.iterdir():
+    subprocess.check_call([ClangExecute, ProgramHome / 'scripts' / 'run-aux.c', '-DBATCH_MODE', '-o', TempDir / 'run-bat.exe', '-O3'])
+    subprocess.check_call([ClangExecute, ProgramHome / 'scripts' / 'run-aux.c', '-DCOMMAND_MODE', '-o', TempDir / 'run-command.exe', '-O3'])
+    for bat in BinAuxDir.iterdir():
         if bat.suffix == '.command':
             command = bat.with_suffix('').name
             shutil.copyfile(src=TempDir / 'run-command.exe', dst=BinDir / f'{command}.exe')
