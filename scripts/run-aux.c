@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <Shlwapi.h>
 #pragma comment(lib, "shlwapi.lib")
-#pragma comment(lib, "shell32.lib")
 
 
 struct Path {
