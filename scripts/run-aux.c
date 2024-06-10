@@ -73,18 +73,59 @@ static struct Path get_batch_path(const wchar_t *program_path) {
 }
 
 
+static int execute(const wchar_t *command_line) {
+#ifdef DEBUG
+    wprintf(L"command_line: %s\n", command_line);
+#endif
+
+    // Get command_line (wchar_t *)
+    size_t len = wcslen(command_line) + 1;
+    wchar_t *buffer = calloc(len, sizeof(wchar_t));
+    wcscpy_s(buffer, len, command_line);
+
+    // Do execute
+    STARTUPINFOW si = { sizeof(STARTUPINFOW) };
+    PROCESS_INFORMATION pi;
+
+    if (!CreateProcessW(NULL, buffer, NULL, NULL, FALSE, CREATE_UNICODE_ENVIRONMENT, NULL, NULL, &si, &pi))
+    {
+        wprintf(L"Run ShellExecute error, return code: %lld\n", (long long)GetLastError());
+    }
+    WaitForSingleObject(pi.hProcess, INFINITE);
+
+    DWORD dwExitCode = 0;
+    GetExitCodeProcess(pi.hProcess, &dwExitCode);
+
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+
+    free(buffer);
+
+    return dwExitCode;
+}
+
+static int execute_with_arguments(const wchar_t *process, const wchar_t *arguments) {
+#ifdef DEBUG
+    wprintf(L"process: %s\n", process);
+    wprintf(L"arguments: %s\n", arguments);
+#endif
+
+    size_t command_line_size = wcslen(process) + 1 /* */ + wcslen(arguments) + 1 /* '\0' */; // process + ` ` + arguments
+    wchar_t *command_line = calloc(command_line_size, sizeof(wchar_t));
+    swprintf_s(command_line, command_line_size, L"%s %s", process, arguments);
+    int result = execute(command_line);
+    free(command_line);
+    return result;
+}
+
+
 int wmain(int argc, const wchar_t *argv[]) {
+    // Get program_path
     wchar_t program_path[MAX_PATH];
     if (GetModuleFileNameW(NULL, program_path, MAX_PATH) == 0) {
         wprintf(L"Error getting module file name.\n");
         return 1;
     }
-
-#ifdef COMMAND_MODE
-    struct Path path = get_command_path(program_path);
-#elif BATCH_MODE
-    struct Path path = get_batch_path(program_path);
-#endif
 
     // Get arguments
     wchar_t *command_line = GetCommandLineW();
@@ -99,40 +140,26 @@ int wmain(int argc, const wchar_t *argv[]) {
         arguments = wcschr(command_line, L' ') + 1;
     }
 
-    // wprintf(L"path: %s\n", path);
-    // wprintf(L"arguments: %s\n", arguments);
-
+    // Get process command
 #ifdef COMMAND_MODE
     const wchar_t *prefix = L"";
+    struct Path path = get_command_path(program_path);
 #elif BATCH_MODE
     const wchar_t *prefix = L"cmd.exe /C ";
+    struct Path path = get_batch_path(program_path);
 #endif
-    size_t cmd_arguments_len = wcslen(prefix) + 2 /*""*/ + wcslen(path.data) + 1 /* */ + command_len; // prefix + "path" + ` ` + arguments
-    wchar_t *cmd_arguments = malloc(cmd_arguments_len * sizeof(wchar_t));
+    size_t process_command_size = wcslen(prefix) + 2 /*""*/ + wcslen(path.data) + 1 /* '\0' */;
+    wchar_t *process_command = calloc(process_command_size, sizeof(wchar_t));
     const wchar_t *format = NULL;
     if (wcsstr(path.data, L" ") || wcsstr(path.data, L"\t")) {
-        format = L"%s\"%s\" %s";
+        format = L"%s\"%s\"";
     } else {
-        format = L"%s%s %s";
+        format = L"%s%s";
     }
-    swprintf_s(cmd_arguments, cmd_arguments_len, format, prefix, path.data, arguments);
+    swprintf_s(process_command, process_command_size, format, prefix, path.data);
 
-    // wprintf(L"Runing: %s\n", cmd_arguments);
-
-    STARTUPINFOW si = { sizeof(STARTUPINFOW) };
-    PROCESS_INFORMATION pi;
-
-    if (!CreateProcessW(NULL, cmd_arguments, NULL, NULL, FALSE, CREATE_UNICODE_ENVIRONMENT, NULL, NULL, &si, &pi))
-    {
-        wprintf(L"Run ShellExecute error, return code: %lld\n", (long long)GetLastError());
-    }
-    WaitForSingleObject(pi.hProcess, INFINITE);
-
-    DWORD dwExitCode = 0;
-    GetExitCodeProcess(pi.hProcess, &dwExitCode);
-
-    CloseHandle(pi.hProcess);
-    CloseHandle(pi.hThread);
-
-    return dwExitCode;
+    // Do execute
+    int result = execute_with_arguments(process_command, arguments);
+    free(process_command);
+    return result;
 }
