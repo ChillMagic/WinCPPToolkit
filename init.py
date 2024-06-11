@@ -23,6 +23,8 @@ BinAuxDir = ProgramHome / 'bin-aux'
 PythonExecute = PythonRoot / 'python.exe'
 ClangExecute = ToolsDir / 'clang_llvm' / 'bin' / 'clang.exe'
 AuxSource = ProgramHome / 'scripts' / 'run-aux.c'
+AuxLibSource = ProgramHome / 'scripts' / 'run-aux-lib.c'
+Arg2cmdlineLibSource = ProgramHome / 'scripts' / 'arg2cmdline.c'
 
 
 def get_platform_machine() -> str:
@@ -166,8 +168,8 @@ def main(args):
                     f.write(f'{run_command}')
 
     # Setup `bin` directory
-    subprocess.check_call([ClangExecute, AuxSource, '-Os', '-DBATCH_MODE',   '-o', TempDir / 'run-bat.exe'])
-    subprocess.check_call([ClangExecute, AuxSource, '-Os', '-DCOMMAND_MODE', '-o', TempDir / 'run-command.exe'])
+    subprocess.check_call([ClangExecute, AuxSource, AuxLibSource, Arg2cmdlineLibSource, '-Os', '-DBATCH_MODE',   '-o', TempDir / 'run-bat.exe'])
+    subprocess.check_call([ClangExecute, AuxSource, AuxLibSource, Arg2cmdlineLibSource, '-Os', '-DCOMMAND_MODE', '-o', TempDir / 'run-command.exe'])
     for bat in BinAuxDir.iterdir():
         if bat.suffix == '.command':
             command = bat.with_suffix('').name
