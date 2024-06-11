@@ -53,7 +53,7 @@ static size_t _arg2cmdline(wchar_t *out_result, const wchar_t *arg, size_t arg_l
 }
 
 static size_t _max_cmdline_size_for_arg(const wchar_t *arg, size_t arg_len) {
-    return arg_len * 2 /* double '\\' */ + 1 /* '\0' or ' ' */;
+    return arg_len * 2 /* double '\\' */ + 2 /* '""' */ + 1 /* '\0' or ' ' */;
 }
 
 static size_t _max_cmdline_size_for_arglist(int argc, const wchar_t *argv[]) {

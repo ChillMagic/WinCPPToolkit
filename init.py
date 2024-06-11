@@ -6,10 +6,11 @@ from pathlib import Path
 import platform
 import urllib.request
 import json
-from typing import Optional
+from typing import Optional, List
 import hashlib
 import argparse
 import os
+import enum
 
 
 ProgramHome = Path(__file__).absolute().parent
@@ -146,41 +147,75 @@ def main(args):
             install[0] = install[0].replace('$[python]', str(PythonExecute))
             subprocess.check_call(install, stdout=subprocess.DEVNULL)
 
-    # Setup `bin-aux` directory
-    for tool, tool_info in tools[get_platform_machine()].items():
-        for command, config in tool_info['command'].items():
-            if isinstance(config, dict):
-                program = config['program']
-                script = '\n'.join(config['script']).replace('$[program]', program)
-                with (BinAuxDir / f'{command}.bat').open('w+') as f:
-                    f.write(script + "\n")
+    def setup_command_file(command: str, program: str):
+        with (BinAuxDir / f'{command}.command').open('w+') as f:
+            program = program.replace('$[python]', str(PythonExecute.relative_to(ProgramHome)))
+            if program.startswith('^'):
+                run_command = os.path.normpath(program[1:]).replace('\\', '/')
             else:
-                with (BinAuxDir / f'{command}.command').open('w+') as f:
-                    assert isinstance(config, str)
-                    program = config
-                    program = program.replace('$[python]', str(PythonExecute.relative_to(ProgramHome)))
-                    if program.startswith('^'):
-                        run_command = os.path.normpath(program[1:]).replace('\\', '/')
-                    else:
-                        run_command = f'tools/{tool}/{program}'
-                    f.write(f'{run_command}')
+                run_command = f'tools/{tool}/{program}'
+            f.write(f'{run_command}')
 
-    # Setup `bin` directory
+    def compile_file(source_file: Path, output_file: Path, object_files: Optional[List[Path]] = None, extra_flags: Optional[list] = None):
+        subprocess.check_call([ClangExecute, source_file, '-Os', '-o', output_file] + (object_files if object_files else []) + (extra_flags if extra_flags else []))
+
+    # Get objects
     object_files = []
     for source in ('run-aux-lib.c', 'arg2cmdline.c'):
         source_file = ProgramHome / 'scripts' / source
         object_file = TempDir / source_file.with_suffix('.o').name
-        subprocess.check_call([ClangExecute, '-c', source_file, '-Os', '-o', object_file])
+        compile_file(source_file, object_file, extra_flags=['-c'])
         object_files.append(object_file)
-    subprocess.check_call([ClangExecute, AuxSource] + object_files + ['-Os', '-DBATCH_MODE',   '-o', TempDir / 'run-bat.exe'])
-    subprocess.check_call([ClangExecute, AuxSource] + object_files + ['-Os', '-DCOMMAND_MODE', '-o', TempDir / 'run-command.exe'])
-    for bat in BinAuxDir.iterdir():
-        if bat.suffix == '.command':
-            command = bat.with_suffix('').name
+
+    # Setup `bin-aux` directory
+    class CommandKind(enum.Enum):
+        RunCommandDirectly = 1
+        RunBatch = 2
+        CompileAndRunC = 3
+    setup_commands = {}
+    for tool, tool_info in tools[get_platform_machine()].items():
+        for command, config in tool_info['command'].items():
+            if isinstance(config, dict):
+                program = config['program']
+                if isinstance(config['script'], list):
+                    script = '\n'.join(config['script']).replace('$[program]', program)
+                    with (BinAuxDir / f'{command}.bat').open('w+') as f:
+                        f.write(script + "\n")
+                    setup_commands[command] = (CommandKind.RunBatch, None)
+                elif isinstance(config['script'], str):
+                    suffix = Path(config['script']).suffix.lower()
+                    command_kind = {
+                        '.c': CommandKind.CompileAndRunC,
+                        '.bat': CommandKind.RunBatch,
+                    }.get(suffix)
+                    script_file = ProgramHome / config['script']
+                    if command_kind is CommandKind.RunBatch:
+                        shutil.copyfile(src=script_file, dst=BinAuxDir / f'{command}.bat')
+                        setup_commands[command] = (CommandKind.RunBatch, None)
+                    elif command_kind is CommandKind.CompileAndRunC:
+                        setup_command_file(command=command, program=program)
+                        output_file = TempDir / script_file.with_suffix('.exe').name
+                        compile_file(script_file, output_file, object_files=object_files)
+                        setup_commands[command] = (CommandKind.CompileAndRunC, output_file)
+                    else:
+                        assert False
+                else:
+                    assert False
+            else:
+                assert isinstance(config, str)
+                setup_command_file(command=command, program=config)
+                setup_commands[command] = (CommandKind.RunCommandDirectly, None)
+
+    # Setup `bin` directory
+    compile_file(AuxSource, TempDir / 'run-bat.exe',     extra_flags=['-DBATCH_MODE'],  object_files=object_files)
+    compile_file(AuxSource, TempDir / 'run-command.exe', extra_flags=['-DCOMMAND_MODE'], object_files=object_files)
+    for command, (kind, info) in setup_commands.items():
+        if kind is CommandKind.RunCommandDirectly:
             shutil.copyfile(src=TempDir / 'run-command.exe', dst=BinDir / f'{command}.exe')
-        elif bat.suffix == '.bat':
-            command = bat.with_suffix('').name
+        elif kind is CommandKind.RunBatch:
             shutil.copyfile(src=TempDir / 'run-bat.exe', dst=BinDir / f'{command}.exe')
+        elif kind is CommandKind.CompileAndRunC:
+            shutil.copyfile(src=info, dst=BinDir / f'{command}.exe')
 
     shutil.rmtree(TempDir)
 

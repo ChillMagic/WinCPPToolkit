@@ -7,15 +7,7 @@
             "command": {
                 "cmake": {
                     "program": "bin/cmake.exe",
-                    "script": [
-                        "@echo off",
-                        "call \"%~dp0../scripts/check-cmake-argument.bat\" %*",
-                        "if \"%cmake_generate%\" == \"1\" (",
-                        "    \"%~dp0../tools/cmake/$[program]\" -GNinja -DCMAKE_TOOLCHAIN_FILE=\"%~dp0../toolchain.cmake\" %*",
-                        ") else (",
-                        "    \"%~dp0../tools/cmake/$[program]\" %*",
-                        ")"
-                    ]
+                    "script": "scripts/run-cmake.c"
                 }
             }
         },

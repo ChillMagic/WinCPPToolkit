@@ -71,7 +71,7 @@ extern struct Path get_program_path() {
     return result;
 }
 
-extern wchar_t *get_program_arguments(int argc) {
+extern const wchar_t *get_program_arguments(int argc) {
     wchar_t *command_line = GetCommandLineW();
     size_t command_len = wcslen(command_line);
     wchar_t *arguments = NULL;
@@ -111,10 +111,27 @@ extern struct Path get_bin_aux_file_path(const wchar_t *program_path, const wcha
 }
 
 
+extern struct Path get_command_path(const wchar_t *program_path, const wchar_t *suffix) {
+    struct Path result = get_root_path(program_path);
+
+    struct Path command_file_path = get_bin_aux_file_path(program_path, suffix);
+    wchar_t *content = read_file(command_file_path.data);
+
+    Path_join(&result, content);
+    free(content);
+
+    return result;
+}
+
+
 // Result need `free`
 extern wchar_t* read_file(const wchar_t *file_path) {
     FILE *f = NULL;
     _wfopen_s(&f, file_path, L"r, ccs=UTF-8");
+    if (!f) {
+        wprintf_s(L"Can not open file`%s`.", file_path);
+        exit(1);
+    }
     fseek(f, 0, SEEK_END);
     size_t file_size = ftell(f);
     fseek(f, 0, SEEK_SET);
