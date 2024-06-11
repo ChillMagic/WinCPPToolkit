@@ -3,8 +3,14 @@
 #define RunAuxLibHeader
 #include <wchar.h>
 
+#ifdef MAX_PATH
+#   define _MAX_PATH_ MAX_PATH
+#else
+#   define _MAX_PATH_ 260
+#endif
+
 struct Path {
-    wchar_t data[MAX_PATH];
+    wchar_t data[_MAX_PATH_];
 };
 
 struct Path Path_from(const wchar_t *str);
