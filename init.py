@@ -23,8 +23,6 @@ BinAuxDir = ProgramHome / 'bin-aux'
 PythonExecute = PythonRoot / 'python.exe'
 ClangExecute = ToolsDir / 'clang_llvm' / 'bin' / 'clang.exe'
 AuxSource = ProgramHome / 'scripts' / 'run-aux.c'
-AuxLibSource = ProgramHome / 'scripts' / 'run-aux-lib.c'
-Arg2cmdlineLibSource = ProgramHome / 'scripts' / 'arg2cmdline.c'
 
 
 def get_platform_machine() -> str:
@@ -168,8 +166,14 @@ def main(args):
                     f.write(f'{run_command}')
 
     # Setup `bin` directory
-    subprocess.check_call([ClangExecute, AuxSource, AuxLibSource, Arg2cmdlineLibSource, '-Os', '-DBATCH_MODE',   '-o', TempDir / 'run-bat.exe'])
-    subprocess.check_call([ClangExecute, AuxSource, AuxLibSource, Arg2cmdlineLibSource, '-Os', '-DCOMMAND_MODE', '-o', TempDir / 'run-command.exe'])
+    object_files = []
+    for source in ('run-aux-lib.c', 'arg2cmdline.c'):
+        source_file = ProgramHome / 'scripts' / source
+        object_file = TempDir / source_file.with_suffix('.o').name
+        subprocess.check_call([ClangExecute, '-c', source_file, '-Os', '-o', object_file])
+        object_files.append(object_file)
+    subprocess.check_call([ClangExecute, AuxSource] + object_files + ['-Os', '-DBATCH_MODE',   '-o', TempDir / 'run-bat.exe'])
+    subprocess.check_call([ClangExecute, AuxSource] + object_files + ['-Os', '-DCOMMAND_MODE', '-o', TempDir / 'run-command.exe'])
     for bat in BinAuxDir.iterdir():
         if bat.suffix == '.command':
             command = bat.with_suffix('').name
