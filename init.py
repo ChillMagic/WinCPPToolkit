@@ -43,23 +43,29 @@ def get_platform_machine() -> str:
     return result
 
 
-SEVENZIP = Path(__file__).absolute().parent / '7zip' / get_platform_machine() / f'7z.exe'
+SEVENZIP = Path(__file__).absolute().parent / '7zip' / get_platform_machine() / '7z.exe'
+CURL = Path(__file__).absolute().parent / 'curl' / get_platform_machine() / 'curl.exe'
+curl_environ = os.environ.copy()
 
 
-def download_file(url: str, download_path: Path, target_name: str, use_cache: bool = False, sha256: Optional[str] = None):
+def download_file(url: str, download_path: Path, target_name: str, use_cache: bool = False, sha256: Optional[str] = None) -> bool:
     target_file = download_path / target_name
     if use_cache and target_file.exists() and (get_sha256(target_file) == sha256 if sha256 else True):
         logging.info(f'Skip download `{url}`, using cache `{target_file}`.')
     else:
         logging.info(f'Downloading `{url}` to `{target_file}`...')
         temp_download_path = download_path / (target_name + '.download')
-        urllib.request.urlretrieve(url, temp_download_path)
+        if args.use_request:
+            urllib.request.urlretrieve(url, temp_download_path)
+        else:
+            subprocess.check_call([CURL, '-L', url, '-o', temp_download_path, '--silent'], env=curl_environ, stdout=subprocess.DEVNULL)
         if sha256:
             temp_sha256 = get_sha256(temp_download_path)
             if temp_sha256 != sha256:
                 logging.error(f'Download `{url}` failed, sha256 is `{temp_sha256}`, excepted `{sha256}`.')
-                return 1
+                return False
         shutil.move(src=temp_download_path, dst=target_file)
+    return True
 
 
 def extract(archive_file: Path, output_path: Path, external_7z_program: Optional[Path] = None):
@@ -90,7 +96,7 @@ def init_dirs():
     BinAuxDir.mkdir(exist_ok=True)
 
 
-def do_enable_pip():
+def do_enable_pip(proxy: Optional[str]):
     if (PythonRoot / 'Scripts' / 'pip.exe').exists():
         return
     pth_file = list(filter(lambda p: p.suffix == '._pth', PythonRoot.iterdir()))[0]
@@ -99,20 +105,32 @@ def do_enable_pip():
     content = content.replace('#import site', 'import site')
     with pth_file.open('w') as f:
         f.write(content)
-    download_file('https://bootstrap.pypa.io/get-pip.py', DownloadsDir, 'get-pip.py', use_cache=True)
-    subprocess.check_call([PythonRoot / 'python.exe', DownloadsDir / 'get-pip.py'], stdout=subprocess.DEVNULL)
+    success = download_file('https://bootstrap.pypa.io/get-pip.py', DownloadsDir, 'get-pip.py', use_cache=True)
+    if success:
+        subprocess.check_call([PythonRoot / 'python.exe', DownloadsDir / 'get-pip.py'] + (['--proxy', proxy] if proxy else []), stdout=subprocess.DEVNULL)
 
 
 def main(args):
     if args.verbose:
         logging.getLogger().setLevel(logging.INFO)
 
+    # Setup proxy
+    if args.proxy:
+        logging.info(f'Setup proxy `{args.proxy}`')
+        if args.use_request:
+            proxy = urllib.request.ProxyHandler({'http': args.proxy, 'https': args.proxy})
+            opener = urllib.request.build_opener(proxy)
+            urllib.request.install_opener(opener)
+        else:
+            curl_environ['ALL_PROXY'] = args.proxy
+
+    # Init
     init_dirs()
 
     if not PythonExecute.exists():
         subprocess.check_call([ProgramHome / 'get-python.bat'], stdout=subprocess.DEVNULL)
 
-    do_enable_pip()
+    do_enable_pip(proxy=args.proxy)
 
     with Path(ProgramHome / 'tools.json').open() as f:
         tools = json.load(f)
@@ -128,7 +146,9 @@ def main(args):
 
         tool_download_name = url.split('/')[-1]
         sha256 = tool_info['sha256']
-        download_file(url, DownloadsDir, tool_download_name, use_cache=True, sha256=sha256)
+        success = download_file(url, DownloadsDir, tool_download_name, use_cache=True, sha256=sha256)
+        if not success:
+            continue
         extract_dir = TempDir / f'{tool}.temp'
         extract(DownloadsDir / tool_download_name, extract_dir)
         if tool_info.get('nested_tar'):
@@ -225,5 +245,7 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--verbose', '-v', action='store_true')
+    parser.add_argument('--proxy', type=str)
+    parser.add_argument('--use-request', action='store_true')
     args = parser.parse_args()
     sys.exit(main(args))
