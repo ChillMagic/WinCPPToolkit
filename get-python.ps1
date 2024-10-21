@@ -4,7 +4,19 @@ $url_x86_64 = "https://www.python.org/ftp/python/$version/python-$version-embed-
 $url_x86    = "https://www.python.org/ftp/python/$version/python-$version-embed-win32.zip"
 $url_arm64  = "https://www.python.org/ftp/python/$version/python-$version-embed-arm64.zip"
 
+if (-not $PSScriptRoot) {
+    $PSScriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
+}
+
 $extractPath = Join-Path $PSScriptRoot "python"
+$toolArchMap = @{
+    "x86"   = "x86"
+    "AMD64" = "x86_64"
+    "ARM64" = "arm64"
+}
+$arch = $toolArchMap[$env:PROCESSOR_ARCHITECTURE]
+$curl = "$PSScriptRoot\curl\$arch\curl.exe"
+$7z = "$PSScriptRoot\7zip\$arch\7z.exe"
 
 
 if (Test-Path $extractPath) {
@@ -35,14 +47,16 @@ function Download {
         exit 1
     }
 
-    Invoke-WebRequest -Uri $url -OutFile $outfile
+    &$curl $url "-o" $outfile
+    # Invoke-WebRequest -Uri $url -OutFile $outfile
     Write-Host "Downloaded to $outfile"
     return $outfile
 }
 
 function Extract {
     New-Item -ItemType Directory -Path $extractPath | Out-Null
-    Expand-Archive -Path $outfile -DestinationPath $extractPath
+    &$7z x $outfile "-o$extractPath"
+    # Expand-Archive -Path $outfile -DestinationPath $extractPath
     Write-Host "Extracted to $extractPath"
 }
 
