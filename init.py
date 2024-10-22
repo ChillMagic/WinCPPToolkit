@@ -110,6 +110,19 @@ def do_enable_pip(proxy: Optional[str]):
         subprocess.check_call([PythonRoot / 'python.exe', DownloadsDir / 'get-pip.py'] + (['--proxy', proxy] if proxy else []), stdout=subprocess.DEVNULL)
 
 
+class ToolsConfig:
+    def __init__(self, data: dict) -> None:
+        self.data = data
+
+    def tool_itmes(self):
+        for tool, tool_info in self.data.items():
+            select_tool_info = tool_info.copy()
+            if 'source' in tool_info:
+                select_tool_info['url'] = tool_info['source'][get_platform_machine()]['url']
+                select_tool_info['sha256'] = tool_info['source'][get_platform_machine()]['sha256']
+            yield tool, select_tool_info
+
+
 def main(args):
     if args.verbose:
         logging.getLogger().setLevel(logging.INFO)
@@ -133,10 +146,10 @@ def main(args):
     do_enable_pip(proxy=args.proxy)
 
     with Path(ProgramHome / 'tools.json').open() as f:
-        tools = json.load(f)
+        tools = ToolsConfig(json.load(f))
 
     # Setup `tools` directory
-    for tool, tool_info in tools[get_platform_machine()].items():
+    for tool, tool_info in tools.tool_itmes():
         if (ToolsDir / tool).exists():
             continue
 
@@ -161,7 +174,7 @@ def main(args):
             shutil.move(src=extract_dir, dst=ToolsDir / tool)
 
     # Run `install`
-    for tool, tool_info in tools[get_platform_machine()].items():
+    for tool, tool_info in tools.tool_itmes():
         install = tool_info.get('install')
         if install:
             install[0] = install[0].replace('$[python]', str(PythonExecute))
@@ -193,7 +206,7 @@ def main(args):
         RunBatch = 2
         CompileAndRunC = 3
     setup_commands = {}
-    for tool, tool_info in tools[get_platform_machine()].items():
+    for tool, tool_info in tools.tool_itmes():
         for command, config in tool_info['command'].items():
             if isinstance(config, dict):
                 program = config['program']
