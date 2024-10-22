@@ -1,8 +1,9 @@
 {
     "cmake": {
+        "version": "3.29.3",
         "source": {
             "x86_64": {
-                "url": "https://github.com/Kitware/CMake/releases/download/v3.29.3/cmake-3.29.3-windows-x86_64.zip",
+                "url": "https://github.com/Kitware/CMake/releases/download/v{version}/cmake-{version}-windows-x86_64.zip",
                 "sha256": "6423ed300e6aa1b15c4aeae9a7399157f53fc84a2fb7242ca64c8dfd83e5f8a6"
             }
         },
@@ -15,9 +16,10 @@
         }
     },
     "git": {
+        "version": "2.45.1",
         "source": {
             "x86_64": {
-                "url": "https://github.com/git-for-windows/git/releases/download/v2.45.1.windows.1/PortableGit-2.45.1-64-bit.7z.exe",
+                "url": "https://github.com/git-for-windows/git/releases/download/v{version}.windows.1/PortableGit-{version}-64-bit.7z.exe",
                 "sha256": "f4be1f923e9cc1ee0cb09e99f0e90cf254b530bb622d12064361563307e2f505"
             }
         },
@@ -26,9 +28,10 @@
         }
     },
     "clang_llvm": {
+        "version": "18.1.6",
         "source": {
             "x86_64": {
-                "url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.6/clang+llvm-18.1.6-x86_64-pc-windows-msvc.tar.xz",
+                "url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-{version}/clang+llvm-{version}-x86_64-pc-windows-msvc.tar.xz",
                 "sha256": "479e9e77b9d114721a7168718c894343ac01c397db3499e8a3002ee7a3903d54"
             }
         },
@@ -43,9 +46,10 @@
         }
     },
     "ninja": {
+        "version": "1.12.1",
         "source": {
             "x86_64": {
-                "url": "https://github.com/ninja-build/ninja/releases/download/v1.12.1/ninja-win.zip",
+                "url": "https://github.com/ninja-build/ninja/releases/download/v{version}/ninja-win.zip",
                 "sha256": "f550fec705b6d6ff58f2db3c374c2277a37691678d6aba463adcbb129108467a"
             }
         },

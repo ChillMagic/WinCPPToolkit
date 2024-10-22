@@ -118,7 +118,11 @@ class ToolsConfig:
         for tool, tool_info in self.data.items():
             select_tool_info = tool_info.copy()
             if 'source' in tool_info:
-                select_tool_info['url'] = tool_info['source'][get_platform_machine()]['url']
+                url = tool_info['source'][get_platform_machine()]['url']
+                version = select_tool_info.get('version')
+                if version:
+                    url = url.format(version=version)
+                select_tool_info['url'] = url
                 select_tool_info['sha256'] = tool_info['source'][get_platform_machine()]['sha256']
             yield tool, select_tool_info
 
