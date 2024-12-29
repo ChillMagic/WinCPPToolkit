@@ -1,4 +1,4 @@
-$version = "3.12.3"
+$version = "3.8.10"
 
 $url_x86_64 = "https://www.python.org/ftp/python/$version/python-$version-embed-amd64.zip"
 $url_x86    = "https://www.python.org/ftp/python/$version/python-$version-embed-win32.zip"
