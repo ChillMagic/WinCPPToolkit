@@ -51,7 +51,7 @@ def setup_tool(tool_name: str, version: str, program_home: Path, temp_dir: Path,
     for arch, suffix in URL_SUFFIX[tool_name].items():
         url = URL_TEMPLATE[tool_name].format(version=version, suffix=suffix)
         file_name = url.split('/')[-1]
-        download_file(url, downloads_dir, file_name, use_cache=True)
+        assert download_file(url, downloads_dir, file_name, use_cache=True)
 
         with tempfile.TemporaryDirectory(dir=temp_dir) as work_dir:
             work_dir = Path(work_dir)
