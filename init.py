@@ -48,7 +48,7 @@ CURL = Path(__file__).absolute().parent / 'curl' / get_platform_machine() / 'cur
 curl_environ = os.environ.copy()
 
 
-def download_file(url: str, download_path: Path, target_name: str, use_request: bool = False, use_cache: bool = False, sha256: Optional[str] = None) -> bool:
+def download_file(url: str, download_path: Path, target_name: str, use_request: bool = False, use_cache: bool = False, sha256: Optional[str] = None, verbose: bool = False, proxy: Optional[str] = None) -> bool:
     target_file = download_path / target_name
     if use_cache and target_file.exists() and (get_sha256(target_file) == sha256 if sha256 else True):
         logging.info(f'Skip download `{url}`, using cache `{target_file}`.')
@@ -58,7 +58,7 @@ def download_file(url: str, download_path: Path, target_name: str, use_request: 
         if use_request:
             urllib.request.urlretrieve(url, temp_download_path)
         else:
-            subprocess.check_call([CURL, '-L', url, '-o', temp_download_path, '--silent'], env=curl_environ, stdout=subprocess.DEVNULL)
+            subprocess.check_call([CURL, '-L', url, '-o', temp_download_path] + ([] if verbose else ['--silent']) + (['--proxy', proxy] if proxy else []), env=curl_environ, stdout=subprocess.DEVNULL)
         if sha256:
             temp_sha256 = get_sha256(temp_download_path)
             if temp_sha256 != sha256:
@@ -96,7 +96,7 @@ def init_dirs():
     BinAuxDir.mkdir(exist_ok=True)
 
 
-def do_enable_pip(proxy: Optional[str], local_file: Optional[Path] = None, use_request: bool = False):
+def do_enable_pip(proxy: Optional[str], local_file: Optional[Path] = None, use_request: bool = False, verbose: bool = False):
     if (PythonRoot / 'Scripts' / 'pip.exe').exists():
         return
     pth_file = list(filter(lambda p: p.suffix == '._pth', PythonRoot.iterdir()))[0]
@@ -108,7 +108,7 @@ def do_enable_pip(proxy: Optional[str], local_file: Optional[Path] = None, use_r
     if local_file is not None:
         subprocess.check_call([PythonRoot / 'python.exe', str(local_file)] + (['--proxy', proxy] if proxy else []))
     else:
-        success = download_file('https://bootstrap.pypa.io/get-pip.py', DownloadsDir, 'get-pip.py', use_request=use_request, use_cache=True)
+        success = download_file('https://bootstrap.pypa.io/get-pip.py', DownloadsDir, 'get-pip.py', use_request=use_request, use_cache=True, verbose=verbose, proxy=proxy)
         if success:
             subprocess.check_call([PythonRoot / 'python.exe', DownloadsDir / 'get-pip.py'] + (['--proxy', proxy] if proxy else []))
 
@@ -150,7 +150,7 @@ def main(args):
     if not PythonExecute.exists():
         subprocess.check_call([ProgramHome / 'get-python.bat'], stdout=subprocess.DEVNULL)
 
-    do_enable_pip(proxy=args.proxy, local_file=ProgramHome / 'scripts' / 'get-pip-3.8.py')
+    do_enable_pip(proxy=args.proxy, local_file=ProgramHome / 'scripts' / 'get-pip-3.8.py', verbose=args.verbose)
 
     with Path(ProgramHome / 'tools.json').open() as f:
         tools = ToolsConfig(json.load(f))
@@ -166,7 +166,7 @@ def main(args):
 
         tool_download_name = url.split('/')[-1]
         sha256 = tool_info['sha256']
-        success = download_file(url, DownloadsDir, tool_download_name, use_request=args.use_request, use_cache=True, sha256=sha256)
+        success = download_file(url, DownloadsDir, tool_download_name, use_request=args.use_request, use_cache=True, sha256=sha256, verbose=args.verbose, proxy=args.proxy)
         if not success:
             continue
         extract_dir = TempDir / f'{tool}.temp'
