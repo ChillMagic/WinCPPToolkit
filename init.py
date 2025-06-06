@@ -96,7 +96,7 @@ def init_dirs():
     BinAuxDir.mkdir(exist_ok=True)
 
 
-def do_enable_pip(proxy: Optional[str]):
+def do_enable_pip(proxy: Optional[str], local_file: Optional[Path] = None):
     if (PythonRoot / 'Scripts' / 'pip.exe').exists():
         return
     pth_file = list(filter(lambda p: p.suffix == '._pth', PythonRoot.iterdir()))[0]
@@ -105,9 +105,12 @@ def do_enable_pip(proxy: Optional[str]):
     content = content.replace('#import site', 'import site')
     with pth_file.open('w') as f:
         f.write(content)
-    success = download_file('https://bootstrap.pypa.io/get-pip.py', DownloadsDir, 'get-pip.py', use_cache=True)
-    if success:
-        subprocess.check_call([PythonRoot / 'python.exe', DownloadsDir / 'get-pip.py'] + (['--proxy', proxy] if proxy else []), stdout=subprocess.DEVNULL)
+    if local_file is not None:
+        subprocess.check_call([PythonRoot / 'python.exe', str(local_file)] + (['--proxy', proxy] if proxy else []))
+    else:
+        success = download_file('https://bootstrap.pypa.io/get-pip.py', DownloadsDir, 'get-pip.py', use_cache=True)
+        if success:
+            subprocess.check_call([PythonRoot / 'python.exe', DownloadsDir / 'get-pip.py'] + (['--proxy', proxy] if proxy else []))
 
 
 class ToolsConfig:
@@ -147,7 +150,7 @@ def main(args):
     if not PythonExecute.exists():
         subprocess.check_call([ProgramHome / 'get-python.bat'], stdout=subprocess.DEVNULL)
 
-    do_enable_pip(proxy=args.proxy)
+    do_enable_pip(proxy=args.proxy, local_file=ProgramHome / 'scripts' / 'get-pip-3.8.py')
 
     with Path(ProgramHome / 'tools.json').open() as f:
         tools = ToolsConfig(json.load(f))
