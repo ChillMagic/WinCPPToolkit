@@ -44,7 +44,7 @@
         "source": {
             "x86_64": {
                 "url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-{version}/clang+llvm-{version}-x86_64-pc-windows-msvc.tar.xz",
-                "sha256": "c811bb8c63af8884ee5be27516fbb1733b14634ed71617abf9761ddbab08a3fe"
+                "sha256": "86345035d5ecc482ff391c3270fe37ba9f53e241e7c419f0d7bab9b7c7c57df0"
             },
             "arm64": {
                 "url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-{version}/clang+llvm-{version}-aarch64-pc-windows-msvc.tar.xz",
