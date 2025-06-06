@@ -1,18 +1,18 @@
 {
     "cmake": {
-        "version": "3.30.5",
+        "version": "4.0.2",
         "source": {
             "x86_64": {
                 "url": "https://github.com/Kitware/CMake/releases/download/v{version}/cmake-{version}-windows-x86_64.zip",
-                "sha256": "5ab6e1faf20256ee4f04886597e8b6c3b1bd1297b58a68a58511af013710004b"
+                "sha256": "109ec7de10416d6d78991bab9714d2cb1ccb71d1b436dff42ec978dd283c29fc"
             },
             "x86": {
                 "url": "https://github.com/Kitware/CMake/releases/download/v{version}/cmake-{version}-windows-i386.zip",
-                "sha256": "f2534dcd3e09b655c6ec5e0f12264eea8d2a07d276c59f25660c413e63e56730"
+                "sha256": "026009a57d06cb8342e42840fcbd83bc5e58ee3ea90d3ddc8e46f82a0d93d9ff"
             },
             "arm64": {
                 "url": "https://github.com/Kitware/CMake/releases/download/v{version}/cmake-{version}-windows-arm64.zip",
-                "sha256": "b5fa431bd569b591717a9a0f77c0ab56b072ef8603f924401227c178ac7072d9"
+                "sha256": "634d6bab01a639e314f4fb2fee0967c84c3a37e39b9b2c9455c2dff2deb6a6dc"
             }
         },
         "use_subdir": true,
@@ -24,15 +24,15 @@
         }
     },
     "git": {
-        "version": "2.47.0",
+        "version": "2.49.0",
         "source": {
             "x86_64": {
                 "url": "https://github.com/git-for-windows/git/releases/download/v{version}.windows.1/PortableGit-{version}-64-bit.7z.exe",
-                "sha256": "0b7fcd76902ebde5b4c00ebae597d7f65dff8c3dd0ae59f5059e1aaa3adace87"
+                "sha256": "bc980a64e875304ea5aa88386fda37e8a0089d0f2023616b9995b1ca75b471dd"
             },
-            "x86": {
-                "url": "https://github.com/git-for-windows/git/releases/download/v{version}.windows.1/PortableGit-{version}-32-bit.7z.exe",
-                "sha256": "b2def285b907ce1d47abd2df8df83df629b768defe08c1fcd4ad91582fc6606b"
+            "arm64": {
+                "url": "https://github.com/git-for-windows/git/releases/download/v{version}.windows.1/PortableGit-{version}-arm64.7z.exe",
+                "sha256": "8fa7e49b319b1109173a90a110aaeb0e9004600ff2ed44adc7dfe56ab21e4148"
             }
         },
         "command": {
@@ -40,11 +40,15 @@
         }
     },
     "clang_llvm": {
-        "version": "19.1.2",
+        "version": "20.1.6",
         "source": {
             "x86_64": {
                 "url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-{version}/clang+llvm-{version}-x86_64-pc-windows-msvc.tar.xz",
-                "sha256": "14e764eb79e4ed58da1b88320e33e5eb6c6064103446b47c4439b14292b99d12"
+                "sha256": "c811bb8c63af8884ee5be27516fbb1733b14634ed71617abf9761ddbab08a3fe"
+            },
+            "arm64": {
+                "url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-{version}/clang+llvm-{version}-aarch64-pc-windows-msvc.tar.xz",
+                "sha256": "f33460a63ed868374b1a207bcc2d4d3eb0753b77c12aa0b138886c2376f3c894"
             }
         },
         "nested_tar": true,
